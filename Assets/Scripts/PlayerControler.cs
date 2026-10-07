@@ -7,7 +7,9 @@ public class PlayerControler : MonoBehaviour
 
     private InputAction _moveAction;
     private Vector2 _moveInput;
+    private InputAction _jumpAction;
     [SerializeField] private float _movementSpeed = 10;
+    [SerializeField] private float _jumpHeight = 2;
 
     private float _turnSmoothVelocity;
     [SerializeField] float _smoothTime = 1;
@@ -23,6 +25,7 @@ public class PlayerControler : MonoBehaviour
     {
         _characterController = GetComponent<CharacterController>();
         _moveAction = InputSystem.actions["Move"];
+        _jumpAction = InputSystem.actions["Jump"];
     }
 
     void Start()
@@ -35,6 +38,11 @@ public class PlayerControler : MonoBehaviour
         _moveInput = _moveAction.ReadValue<Vector2>();
 
         Garvity();
+
+        if(_jumpAction.WasPressedThisFrame() && IsGrounded())
+        {
+            Jump();
+        }
 
         Movement();
     }
@@ -54,19 +62,34 @@ public class PlayerControler : MonoBehaviour
         }
     }
 
+    void Jump()
+    {
+        _playerGravity.y = Mathf.Sqrt(_jumpHeight * -2 * _gravity);
+    }
+
     void Garvity()
     {
-        if(!_characterController.isGrounded)
+        if(!IsGrounded())
         {
             _playerGravity.y += _gravity * Time.deltaTime;
+        }
+        else if(IsGrounded() && _playerGravity.y < 0)
+        {
+            _playerGravity.y = _gravity;
         }
        
         _characterController.Move(_playerGravity * Time.deltaTime);
     }
 
 
-    /*bool IsGrounded()
+    bool IsGrounded()
     {
+        return Physics.CheckSphere(_sensorTransform.position, _sensorRadius, _groundLayer);
+    }
 
-    }*/
+    void OnDrawGizmos() 
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(_sensorTransform.position, _sensorRadius);
+    }
 }
