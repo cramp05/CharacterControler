@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     private CharacterController _characterController;
+    private Animator _animator;
 
     private InputAction _moveAction;
     private Vector2 _moveInput;
@@ -28,6 +29,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+        _animator = GetComponentInChildren<Animator>();
 
         _moveAction = InputSystem.actions["Move"];
         _jumpAction = InputSystem.actions["Jump"];
@@ -83,6 +85,9 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
 
+        _animator.SetFloat("Vertical", direction.magnitude);//para el joystic
+        _animator.SetFloat("Horizontal", 0);
+
         if(direction != Vector3.zero)
         {
             float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + _cameraTransform.eulerAngles.y;
@@ -99,6 +104,9 @@ public class PlayerController : MonoBehaviour
     void AimMovement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
+
+        _animator.SetFloat("Horizontal", _moveInput.x, 0.2f, Time.deltaTime);//para la animacion
+        _animator.SetFloat("Vertical", _moveInput.y, 0.2f, Time.deltaTime);//para la animacion
 
         float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + _cameraTransform.eulerAngles.y;
         float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, _cameraTransform.eulerAngles.y, ref _turnSmoothVelocity, _smoothTime);
