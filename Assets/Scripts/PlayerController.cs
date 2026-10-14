@@ -56,6 +56,8 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
+        _animator.SetBool("IsJunmping", !IsGrounded());
+
         if(_aimAction.IsPressed())
         {
             AimMovement();
@@ -66,7 +68,7 @@ public class PlayerController : MonoBehaviour
         }        
     }
 
-    void TopDownMovement()
+    /*void TopDownMovement()
     {
         Vector3 moveDirection = new Vector3(_moveInput.x, 0, _moveInput.y);
 
@@ -79,13 +81,13 @@ public class PlayerController : MonoBehaviour
 
             _characterController.Move(moveDirection * _movementSpeed * Time.deltaTime);
         }
-    }
+    }*/
 
     void TPMovement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
 
-        _animator.SetFloat("Vertical", direction.magnitude);//para el joystic
+        _animator.SetFloat("Vertical", direction.magnitude, 0.2f, Time.deltaTime);//para el joystic
         _animator.SetFloat("Horizontal", 0);
 
         if(direction != Vector3.zero)
