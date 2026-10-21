@@ -10,9 +10,13 @@ public class PlayerController : MonoBehaviour
     private Vector2 _moveInput;
     private InputAction _jumpAction;
     private InputAction _aimAction;
+    private InputAction _interactAction;
+    private InputAction _attackAction;
     
     [SerializeField] private float _movementSpeed = 10;
     [SerializeField] private float _jumpHeight = 2;
+    [SerializeField] private float _pushForce = 5;
+    [SerializeField] private float _throwForce = 20;
 
     private float _turnSmoothVelocity;
     [SerializeField] float _smoothTime = 1;
@@ -26,6 +30,10 @@ public class PlayerController : MonoBehaviour
 
     private Transform _cameraTransform;
 
+    private GameObject _grabbedObject;
+    [SerializeField] private Transform _handsTransform;
+    [SerializeField] private float _handsRadius = 1;
+
     void Awake()
     {
         _characterController = GetComponent<CharacterController>();
@@ -34,6 +42,8 @@ public class PlayerController : MonoBehaviour
         _moveAction = InputSystem.actions["Move"];
         _jumpAction = InputSystem.actions["Jump"];
         _aimAction = InputSystem.actions["Aim"];
+        _interactAction = InputSystem.actions["Interact"];
+        _attackAction = InputSystem.actions["Attack"];
 
         _cameraTransform = Camera.main.transform;
     }
@@ -65,7 +75,17 @@ public class PlayerController : MonoBehaviour
         else
         {
             TPMovement();
-        }        
+        }    
+
+        if(_interactAction.WasPressedThisFrame())
+        {
+            GrabObject();
+        }    
+
+        if(_attackAction.WasPressedThisFrame())
+        {
+            ThrowObject();
+        }
     }
 
     /*void TopDownMovement()
@@ -147,9 +167,73 @@ public class PlayerController : MonoBehaviour
         return Physics.CheckSphere(_sensorTransform.position, _sensorRadius, _groundLayer);
     }
 
+    void GrabObject()
+    {
+        if(_grabbedObject == null)
+        {
+            Collider[] objectsToGrab = Physics.OverlapSphere(_handsTransform.position, _handsRadius);
+
+            foreach(Collider item in objectsToGrab)
+            {
+                if(item.CompareTag("Empujable"))
+                {
+                    _grabbedObject = item.gameObject;
+                    _grabbedObject.transform.SetParent(_handsTransform);
+                    _grabbedObject.transform.position = _handsTransform.position;
+                    _grabbedObject.transform.rotation = _handsTransform.rotation;
+                    Rigidbody objectRigidbody = _grabbedObject.GetComponent<Rigidbody>();
+                    objectRigidbody.isKinematic = true;
+                    objectRigidbody.constraints = RigidbodyConstraints.None;
+
+                    return;
+                }
+               
+            }
+        }
+        else
+        {
+            _grabbedObject.transform.SetParent(null);
+            Rigidbody objectRigidbody = _grabbedObject.GetComponent<Rigidbody>();
+            objectRigidbody.isKinematic = false;
+            _grabbedObject = null;         
+        }
+    }
+    void ThrowObject()
+    {
+        if(_grabbedObject != null)
+        {
+            
+            Rigidbody objectRigidbody = _grabbedObject.GetComponent<Rigidbody>();
+            objectRigidbody.isKinematic = false;
+            objectRigidbody.AddForce(_cameraTransform.forward * _throwForce, ForceMode.Impulse);
+            _grabbedObject.transform.SetParent(null);
+            _grabbedObject = null; 
+
+        }
+    }
+
+    void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if(hit.gameObject.CompareTag("Empujable"))
+        {
+            Rigidbody _rbody = hit.gameObject.GetComponent<Rigidbody>();
+
+            Vector3 pushDirection = hit.moveDirection;
+
+            pushDirection.y = 0;
+
+            //_rbody.AddForce(pushDirection * _pushForce, ForceMode.Force);
+
+            _rbody.linearVelocity = pushDirection * _pushForce / _rbody.mass;
+        }
+    }
+
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(_sensorTransform.position, _sensorRadius);
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(_handsTransform.position, _handsRadius);
     }
 }
