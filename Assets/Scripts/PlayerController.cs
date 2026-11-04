@@ -226,6 +226,8 @@ public class PlayerController : MonoBehaviour
 
             _rbody.linearVelocity = pushDirection * _pushForce / _rbody.mass;
         }
+
+        
     }
 
     void OnDrawGizmos()
